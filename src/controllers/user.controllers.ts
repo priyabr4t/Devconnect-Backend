@@ -6,7 +6,7 @@ const users = [
     { id: 2, name: "Jane" }
 ];
 
-// FETCH ALL USERS
+FETCH ALL USERS
 export const getUsers = (req: Request, res: Response) => {
     res.status(200).json({ success: true, data: users });
 }
