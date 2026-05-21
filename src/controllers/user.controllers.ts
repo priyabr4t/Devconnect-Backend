@@ -115,3 +115,59 @@ export const deleteUserById = async (req: Request, res: Response) => {
         return res.status(500).json({ success: false, message: "Error deleting user" });
     }
 }
+
+export const updateProfile = async (req: Request, res: Response) => {
+
+    try {
+
+        const userId = req.userId;
+
+        if (!userId) {
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized"
+            });
+        }
+
+        const {
+            bio,
+            profileImage
+        } = req.body;
+
+        const updatedUser =
+            await User.findByIdAndUpdate(
+                userId,
+                {
+                    bio,
+                    profileImage
+                },
+                {
+                    new: true
+                }
+            ).select("-password");
+
+        if (!updatedUser) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            data: updatedUser
+        });
+
+    } catch (error) {
+
+        console.error(error);
+
+        return res.status(500).json({
+            success: false,
+            message:
+                "Error updating profile"
+        });
+
+    }
+
+}
