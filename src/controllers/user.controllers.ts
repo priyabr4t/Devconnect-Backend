@@ -244,3 +244,81 @@ export const followUser = async (req: Request, res: Response) => {
         });
     }
 }
+
+// UNFOLLOW USER
+export const unfollowUser = async (req: Request, res: Response) => {
+    try {
+        const userId = req.userId;
+        const targetUserId = req.params.id as string;
+
+        // check if user is authenticated
+        if (!userId) {
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized"
+            });
+        }
+
+        if (!mongoose.Types.ObjectId.isValid(targetUserId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid user ID"
+            });
+        }
+
+        // check if user is trying to unfollow themselves
+        if (userId === targetUserId) {
+            return res.status(400).json({
+                success: false,
+                message: "You cannot unfollow yourself"
+            });
+        }
+
+        // check if target user exists
+        const targetUser = await User.findById(targetUserId);
+        const currentUser = await User.findById(userId);
+
+        if (!targetUser || !currentUser) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+
+        // check if not following
+        const isAlreadyFollowing = targetUser.followers.some(
+            follower => follower.toString() === userId
+        );
+
+        if (!isAlreadyFollowing) {
+            return res.status(400).json({
+                success: false,
+                message: "You are not following this user"
+            });
+        }
+
+        // remove follower and following
+        targetUser.followers =
+            targetUser.followers.filter(
+                follower => follower.toString() !== currentUser._id.toString()
+            );
+
+        currentUser.following = currentUser.following.filter(
+            following => following.toString() !== targetUser._id.toString()
+        );
+
+        // save both users parallelly
+        await Promise.all([targetUser.save(), currentUser.save()]);
+
+        return res.status(200).json({
+            success: true,
+            message: "User unfollowed successfully"
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            success: false,
+            message: "Error unfollowing user"
+        });
+    }
+}
