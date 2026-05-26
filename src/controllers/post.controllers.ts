@@ -109,3 +109,109 @@ export const deletePost = async (req: Request, res: Response) => {
     }
 
 }
+
+export const likePost = async (req: Request, res: Response) => {
+    try {
+        const postId = req.params.id as string
+
+        if (!mongoose.isValidObjectId(postId)) {
+            return res.status(400).json({ success: false, message: "Invalid post id" })
+        }
+
+        const userId = req.userId
+
+        if (!userId) {
+            return res.status(401).json({ success: false, message: "Unauthorised" })
+        }
+
+        const post = await Post.findById(postId);
+
+        if (!post) {
+            return res.status(404).json({
+                success: false,
+                message: "Post not found"
+            });
+        }
+
+        const alreadyLiked = post.likes.some(like => like.toString() === userId);
+
+        if (alreadyLiked) {
+            return res.status(400).json({
+                success: false,
+                message:
+                    "Post already liked"
+            });
+        }
+
+
+        post.likes.push(new mongoose.Types.ObjectId(userId));
+
+        await post.save();
+
+        return res.status(200).json({
+            success: true,
+            message:
+                "Post liked successfully"
+        });
+
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            success: false,
+            message: "Failed to like post"
+        });
+    }
+}
+
+export const unlikePost = async (req: Request, res: Response) => {
+    try {
+        const postId = req.params.id as string
+
+        if (!mongoose.isValidObjectId(postId)) {
+            return res.status(400).json({ success: false, message: "Invalid post id" })
+        }
+
+        const userId = req.userId
+
+        if (!userId) {
+            return res.status(401).json({ success: false, message: "Unauthorised" })
+        }
+
+        const post = await Post.findById(postId);
+
+        if (!post) {
+            return res.status(404).json({
+                success: false,
+                message: "Post not found"
+            });
+        }
+
+        const alreadyLiked = post.likes.some(like => like.toString() === userId);
+
+        if (!alreadyLiked) {
+            return res.status(400).json({
+                success: false,
+                message:
+                    "Post not liked"
+            });
+        }
+
+
+        post.likes.pull(new mongoose.Types.ObjectId(userId));
+
+        await post.save();
+
+        return res.status(200).json({
+            success: true,
+            message:
+                "Post unliked successfully"
+        });
+
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            success: false,
+            message: "Failed to unlike post"
+        });
+    }
+}
