@@ -197,7 +197,9 @@ export const unlikePost = async (req: Request, res: Response) => {
         }
 
 
-        post.likes.pull(new mongoose.Types.ObjectId(userId));
+        post.likes = post.likes.filter(
+            like => like.toString() !== userId
+        );
 
         await post.save();
 
