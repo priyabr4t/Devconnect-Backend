@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import Post from '../models/post.model';
 import mongoose, { mongo } from 'mongoose';
+import User from '../models/user.model';
 
 export const createPost = async (req: Request, res: Response) => {
     try {
@@ -215,5 +216,32 @@ export const unlikePost = async (req: Request, res: Response) => {
             success: false,
             message: "Failed to unlike post"
         });
+    }
+}
+
+export const getFeed = async (req: Request, res: Response) => {
+    try {
+        const userId = req.userId
+        if (!userId) {
+            return res.status(401).json({ success: false, message: "Unauthorized" })
+        }
+
+        const currentUser = await User.findById(userId)
+
+        if (!currentUser) {
+            return res.status(404).json({ success: false, message: "User not found" })
+        }
+
+        const feedUserIds = [...currentUser.following, currentUser._id]
+
+        const posts = await Post.find({ author: { $in: feedUserIds } })
+            .populate("author", "name profileImage bio")
+            .sort({ createdAt: -1 }) // newest post first   
+
+        return res.status(200).json({ success: true, data: posts })
+
+    } catch (error) {
+        console.error(error)
+        return res.status(500).json({ success: false, message: "Failed to fetch feed" })
     }
 }
