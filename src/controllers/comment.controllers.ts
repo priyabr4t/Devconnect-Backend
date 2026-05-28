@@ -61,3 +61,24 @@ export const createComment = async (req: Request, res: Response) => {
         return res.status(500).json({ success: false, message: 'Failed to create comment' });
     }
 };
+
+export const getCommentsByPostId = async (req: Request, res: Response) => {
+    try {
+        const postId = req.params.postId as string;
+
+        if (!mongoose.isValidObjectId(postId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid Post ID"
+            });
+        }
+        const comments = await Comment.find({ post: postId })
+            .populate("author", "name profileImage bio")
+            .sort({ createdAt: -1 }); // newest comment first
+
+        return res.status(200).json({ success: true, data: comments });
+    } catch (error) {
+        console.error("Error fetching comments:", error);
+        return res.status(500).json({ success: false, message: 'Failed to fetch comments' });
+    }
+}
