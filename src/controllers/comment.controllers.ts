@@ -1,0 +1,63 @@
+import { Request, Response } from 'express';
+import Comment from '../models/comment.model';
+import Post from '../models/post.model';
+import mongoose from 'mongoose';
+
+export const createComment = async (req: Request, res: Response) => {
+    try {
+        const userId = req.userId;
+        const postId = req.params.postId as string;
+
+        if (!postId) {
+            return res.status(400).json({
+                success: false,
+                message: "Post ID is required"
+            });
+        }
+        if (!userId) {
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized"
+            });
+        }
+
+        const { content } = req.body;
+
+        if (typeof content !== "string" || content.trim() === "") {
+            return res.status(400).json({
+                success: false,
+                message: "Comment content is required"
+            });
+        }
+
+        const trimmedContent = content.trim();
+
+        if (!mongoose.isValidObjectId(postId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid Post ID"
+            });
+        }
+
+        const post = await Post.findById(postId);
+        if (!post) {
+            return res.status(404).json({
+                success: false,
+                message: "Post not found"
+            });
+        }
+
+        const newComment = new Comment({
+            content: trimmedContent,
+            author: userId,
+            post: postId
+        });
+
+        await newComment.save();
+
+        return res.status(201).json({ success: true, message: 'Comment created successfully', comment: newComment });
+    } catch (error) {
+        console.error("Error creating comment:", error);
+        return res.status(500).json({ success: false, message: 'Failed to create comment' });
+    }
+};
