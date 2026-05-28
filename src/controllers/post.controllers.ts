@@ -234,11 +234,25 @@ export const getFeed = async (req: Request, res: Response) => {
 
         const feedUserIds = [...currentUser.following, currentUser._id]
 
+        const page = Number(req.query.page) || 1;
+
+        const limit = Number(req.query.limit) || 10;
+
+        const skip = (page - 1) * limit;
+
         const posts = await Post.find({ author: { $in: feedUserIds } })
             .populate("author", "name profileImage bio")
-            .sort({ createdAt: -1 }) // newest post first   
+            .sort({ createdAt: -1 }) // newest post first  
+            .skip(skip)
+            .limit(limit);
 
-        return res.status(200).json({ success: true, data: posts })
+        return res.status(200).json({
+            success: true,
+            currentPage: page,
+            limit,
+            totalPosts: posts.length,
+            data: posts
+        });
 
     } catch (error) {
         console.error(error)
