@@ -82,3 +82,46 @@ export const getCommentsByPostId = async (req: Request, res: Response) => {
         return res.status(500).json({ success: false, message: 'Failed to fetch comments' });
     }
 }
+
+export const deleteComment = async (req: Request, res: Response) => {
+    try {
+        const userId = req.userId;
+        const commentId = req.params.commentId as string;
+
+        if(!userId) {
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized"
+            });
+        }
+
+        if (!mongoose.isValidObjectId(commentId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid Comment ID"
+            });
+        }
+
+        const comment = await Comment.findById(commentId);
+        if (!comment) {
+            return res.status(404).json({
+                success: false,
+                message: "Comment not found"
+            });
+        }
+
+        if (comment.author.toString() !== userId) {
+            return res.status(403).json({
+                success: false,
+                message: "Forbidden: You can only delete your own comments"
+            });
+        }
+
+        await comment.deleteOne();
+
+        return res.status(200).json({ success: true, message: 'Comment deleted successfully' });
+    } catch (error) {
+        console.error("Error deleting comment:", error);
+        return res.status(500).json({ success: false, message: 'Failed to delete comment' });
+    }
+}
