@@ -6,6 +6,7 @@ import { loggerMiddleware } from "./middlewares/logger.middleware";
 import { errorMiddleware } from "./middlewares/error.middleware";
 import authRoutes from "./routes/auth.routes";
 import postRoutes from "./routes/post.routes";
+import commentRoutes from "./routes/comment.routes";
 
 const app: Express = express();
 
@@ -24,6 +25,7 @@ app.use("/api", healthRoutes);
 app.use("/api", userRoutes);
 app.use('/api/auth', authRoutes)
 app.use('/api/posts', postRoutes);
+app.use('/api', commentRoutes);
 app.use(errorMiddleware);
 
 
